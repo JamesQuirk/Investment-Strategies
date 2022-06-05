@@ -99,7 +99,7 @@ def _meticulously_fetch_data(ticker,date_from,date_to,granularity):
 				break
 		else:
 			prev_distance = distance_from_target_date
-	history.drop_duplicates(inplace=True)
+	history.drop_duplicates(inplace=True,subset=["date"])
 	return history
 
 def get_data(ticker, date_from=None, date_to=None, granularity="day", save=True):
@@ -119,14 +119,14 @@ def get_data(ticker, date_from=None, date_to=None, granularity="day", save=True)
 	data_path = Path("data/")
 	csv_path = data_path / f"{ticker.lower()}_{date_from}_{date_to}.csv"
 	if csv_path.exists():
-		history = pd.read_csv(csv_path)
+		history = pd.read_csv(csv_path,index_col=0)
 		return _format_data(history)
 	elif sum([ticker.lower() in fname.name for fname in data_path.iterdir()]):
 		for fname in data_path.iterdir():
 			fname = fname.name
 			if ticker.lower() in fname:
 				break
-		partial_history = _format_data(pd.read_csv(data_path / fname))
+		partial_history = _format_data(pd.read_csv(data_path / fname,index_col=0))
 		before_to = int(fname.split("_")[1])
 		after_from = int(fname.split("_")[2][:-4])
 
