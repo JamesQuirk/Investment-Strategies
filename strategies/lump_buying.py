@@ -1,4 +1,7 @@
-from .helpers import parse_date
+if __name__ == "__main__":
+	from helpers import parse_date
+else:
+	from .helpers import parse_date
 
 def lump_buy(data,start,end,quantity=None,value=None,fractional_stocks=False):
 	"""
@@ -18,16 +21,17 @@ def lump_buy(data,start,end,quantity=None,value=None,fractional_stocks=False):
 		quantity = value / cost if fractional_stocks else int(value / cost)
 	total_cost = cost * quantity
 
-	end_state = data[data["date"] < end].iloc[0]
-	value = (end_state["open"] + end_state["close"]) / 2
-	total_value = value * quantity
-
 	portfolio = data[(data["date"] >= start) & (data["date"] <= end)][["date","open","close"]].reset_index(drop=True)
 	portfolio["cost"] = (portfolio["open"] + portfolio["close"]) / 2
-	portfolio["current_total_value"] = portfolio["cost"] * quantity
 	portfolio["cum_cost"] = total_cost
 	portfolio["cum_quantity"] = quantity
-	portfolio.drop(["cost","open","close"],axis=1,inplace=True)
+	portfolio["current_total_value"] = portfolio["cost"] * quantity
+	portfolio.drop(["open","close"],axis=1,inplace=True)
 	portfolio.sort_values(by="date",ascending=True,inplace=True,ignore_index=True)
 	return portfolio
 
+if __name__ == "__main__":
+	import os
+	import pandas as pd
+	data = pd.read_csv("data/" + os.listdir("data")[1],parse_dates=["date"],index_col=0)
+	lump_buy(data,data["date"].min(),data["date"].max(),30,value=500,fractional_stocks=True)

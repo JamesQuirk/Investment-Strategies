@@ -1,7 +1,10 @@
 
 import pandas as pd
 from datetime import timedelta
-from .helpers import parse_date
+if __name__ == "__main__":
+	from helpers import parse_date
+else:
+	from .helpers import parse_date
 
 def cost_average(data,start,end,period_days,quantity=None,value=None, fractional_stocks=False):
 	"""
@@ -61,5 +64,24 @@ def cost_average(data,start,end,period_days,quantity=None,value=None, fractional
 	)
 	portfolio_df = pd.DataFrame(portfolio)
 	
-	return portfolio_df
+	full_portfolio_df = pd.merge(
+		data[(data["date"] >= start) & (data["date"] <= end)],
+		portfolio_df,
+		how="left",
+		on="date"
+	)\
+		.sort_values(by="date",ascending=True)\
+			.reset_index(drop=True)
+	
+	## Fill missing vals
+	full_portfolio_df["cost"] = ( full_portfolio_df["open"] + full_portfolio_df["close"] ) / 2
+	# full_portfolio_df[["quantity","buy_cost"]] = full_portfolio_df[["quantity","buy_cost"]].fillna(value=0)
+	full_portfolio_df[["cum_quantity","cum_cost"]] = full_portfolio_df[["cum_quantity","cum_cost"]].fillna(method="ffill")
+	full_portfolio_df["current_total_value"] = full_portfolio_df["cum_quantity"] * full_portfolio_df["cost"]
 
+	return full_portfolio_df[portfolio_df.columns].drop(["quantity","buy_cost"],axis=1)
+
+if __name__ == "__main__":
+	import os
+	data = pd.read_csv("data/" + os.listdir("data")[1],parse_dates=["date"],index_col=0)
+	cost_average(data,data["date"].min(),data["date"].max(),30,value=500,fractional_stocks=True)
