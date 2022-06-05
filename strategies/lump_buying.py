@@ -22,11 +22,12 @@ def lump_buy(data,start,end,quantity=None,value=None,fractional_stocks=False):
 	value = (end_state["open"] + end_state["close"]) / 2
 	total_value = value * quantity
 
-	portfolio = data[(data["date"] >= start) & (data["date"] <= end)][["date","open","close"]].reset_index()
+	portfolio = data[(data["date"] >= start) & (data["date"] <= end)][["date","open","close"]].reset_index(drop=True)
 	portfolio["cost"] = (portfolio["open"] + portfolio["close"]) / 2
 	portfolio["current_total_value"] = portfolio["cost"] * quantity
 	portfolio["cum_cost"] = total_cost
 	portfolio["cum_quantity"] = quantity
 	portfolio.drop(["cost","open","close"],axis=1,inplace=True)
+	portfolio.sort_values(by="date",ascending=True,inplace=True,ignore_index=True)
 	return portfolio
 
